@@ -6,54 +6,277 @@
     <title>Expense & Budget Visualizer</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Expense & Budget Visualizer</h1>
+            <div class="header-content">
+                <h1><i class="fas fa-chart-pie"></i> Expense & Budget Visualizer</h1>
+                <div class="theme-toggle">
+                    <button id="theme-toggle" aria-label="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+            
             <div class="balance-card">
                 <p>TOTAL BALANCE</p>
                 <h2 id="total-balance">$0.00</h2>
             </div>
         </header>
 
-        <section class="input-section">
-            <h3>Add Transaction</h3>
-            <form id="transaction-form">
-                <div class="form-group">
-                    <label>Item Name</label>
-                    <input type="text" id="item-name" placeholder="Contoh: Kopi" required>
-                </div>
-                <div class="form-group">
-                    <label>Amount</label>
-                    <input type="number" id="amount" placeholder="0.00" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <select id="category" required>
-                        <option value="Food">Food</option>
-                        <option value="Transport">Transport</option>
-                        <option value="Fun">Fun</option>
-                    </select>
-                </div>
-                <button type="submit" id="add-btn">Add Transaction</button>
-            </form>
-        </section>
+        <div class="main-grid">
+            <section class="input-section">
+                <h3><i class="fas fa-plus-circle"></i> Add Transaction</h3>
+                <form id="transaction-form">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Item Name</label>
+                        <input type="text" id="item-name" placeholder="Contoh: Kopi" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-dollar-sign"></i> Amount</label>
+                        <input type="number" id="amount" placeholder="0.00" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-folder"></i> Category</label>
+                        <div class="category-selector">
+                            <select id="category" required>
+                                <!-- Categories will be populated dynamically -->
+                            </select>
+                            <button type="button" id="add-category-btn" class="icon-btn" title="Add custom category">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-bell"></i> Spending Limit (Optional)</label>
+                        <input type="number" id="spending-limit" placeholder="Set limit for this category" step="0.01">
+                    </div>
+                    <button type="submit" id="add-btn" class="primary-btn">
+                        <i class="fas fa-plus"></i> Add Transaction
+                    </button>
+                </form>
+            </section>
 
-        <div class="display-grid">
+            <section class="controls-section">
+                <h3><i class="fas fa-sliders-h"></i> Controls</h3>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label><i class="fas fa-sort-amount-up"></i> Sort Transactions</label>
+                        <select id="sort-by">
+                            <option value="date">Date Added (Newest)</option>
+                            <option value="amount-asc">Amount (Low to High)</option>
+                            <option value="amount-desc">Amount (High to Low)</option>
+                            <option value="category">Category (A-Z)</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label><i class="fas fa-filter"></i> Filter by Category</label>
+                        <select id="filter-category">
+                            <option value="all">All Categories</option>
+                            <!-- Categories will be populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label><i class="fas fa-exclamation-triangle"></i> Highlight Limit</label>
+                        <input type="number" id="global-limit" placeholder="Set global spending limit" step="0.01">
+                        <button id="apply-limit" class="secondary-btn">Apply</button>
+                    </div>
+                </div>
+            </section>
+
             <section class="list-section">
-                <h3>Transactions</h3>
-                <ul id="transaction-list">
-                    </ul>
+                <div class="section-header">
+                    <h3><i class="fas fa-list"></i> Transactions</h3>
+                    <div class="transaction-count">
+                        <span id="transaction-count">0 transactions</span>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="transaction-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Amount</th>
+                                <th>Category</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list">
+                            <!-- Transactions will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <section class="chart-section">
-                <h3>Spending by Category</h3>
-                <canvas id="expenseChart"></canvas>
+                <h3><i class="fas fa-chart-pie"></i> Spending by Category</h3>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
             </section>
         </div>
     </div>
 
+    <!-- Modal for adding custom category -->
+    <div id="category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-folder-plus"></i> Add Custom Category</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Category Name</label>
+                    <input type="text" id="new-category-name" placeholder="Enter category name">
+                </div>
+                <div class="form-group">
+                    <label>Category Color</label>
+                    <input type="color" id="new-category-color" value="#3498db">
+                </div>
+                <button id="save-category" class="primary-btn">Save Category</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/script.js"></script>
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <h4><i class="fas fa-user"></i> About Developer</h4>
+                    <p>Created with ❤️ by <strong>Satria Farel Cipta Permata</strong></p>
+                    <p>A passionate developer building modern web applications</p>
+                </div>
+                <div class="footer-links">
+                    <h4><i class="fas fa-link"></i> Quick Links</h4>
+                    <ul>
+                        <li><a href="#" onclick="resetApp()"><i class="fas fa-redo"></i> Reset App</a></li>
+                        <li><a href="#" onclick="exportData()"><i class="fas fa-download"></i> Export Data</a></li>
+                        <li><a href="#" onclick="importData()"><i class="fas fa-upload"></i> Import Data</a></li>
+                    </ul>
+                </div>
+                <div class="footer-stats">
+                    <h4><i class="fas fa-chart-bar"></i> App Stats</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-transactions">0</span>
+                            <span class="stat-label">Transactions</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-categories">3</span>
+                            <span class="stat-label">Categories</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="active-limits">0</span>
+                            <span class="stat-label">Active Limits</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Expense & Budget Visualizer. All rights reserved.</p>
+                <p class="version">v1.0.0 | Last updated: <span id="current-date"></span></p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Update footer stats
+        function updateFooterStats() {
+            document.getElementById('total-transactions').textContent = transactions.length;
+            document.getElementById('total-categories').textContent = categories.length;
+            
+            const activeLimits = Object.keys(spendingLimits).length + (globalSpendingLimit > 0 ? 1 : 0);
+            document.getElementById('active-limits').textContent = activeLimits;
+            
+            // Update current date
+            const now = new Date();
+            document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        // Reset app function
+        function resetApp() {
+            if (confirm('Are you sure you want to reset the app? This will delete all data.')) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+        
+        // Export data function
+        function exportData() {
+            const data = {
+                transactions,
+                categories,
+                spendingLimits,
+                globalSpendingLimit,
+                theme: document.documentElement.getAttribute('data-theme')
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'expense-tracker-data.json';
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            alert('Data exported successfully!');
+        }
+        
+        // Import data function
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (confirm('Importing data will replace current data. Continue?')) {
+                            localStorage.setItem('transactions', JSON.stringify(data.transactions || []));
+                            localStorage.setItem('categories', JSON.stringify(data.categories || []));
+                            localStorage.setItem('spendingLimits', JSON.stringify(data.spendingLimits || {}));
+                            localStorage.setItem('globalSpendingLimit', data.globalSpendingLimit || 0);
+                            localStorage.setItem('theme', data.theme || 'light');
+                            
+                            window.location.reload();
+                        }
+                    } catch (error) {
+                        alert('Error importing data: Invalid file format');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+        
+        // Update footer stats on load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFooterStats();
+            
+            // Update stats when data changes
+            const originalSaveAndRefresh = window.saveAndRefresh;
+            window.saveAndRefresh = function() {
+                originalSaveAndRefresh();
+                updateFooterStats();
+            };
+        });
+    </script>
 </body>
 </html>
